@@ -7,12 +7,6 @@
 #include <node_version.h>
 #include <uv.h>
 
-#include <ctime>
-#include <iostream>
-#include <string>
-#include <stdlib.h>
-#include <string.h> 
-
 #include <blpapi_session.h>
 #include <blpapi_eventdispatcher.h>
 
