@@ -702,57 +702,96 @@ Session::Request(const Arguments& args)
         // blpapi::Request by setting values using 'set'.  Arrays indicate
         // values which should be marshalled using 'append'.
         Local<Value> val = obj->Get(keyval);
-        if (val->IsString()) {
-            Local<String> s = val->ToString();
-            String::Utf8Value valv(s);
-            request.set(*keyv, *valv);
-        } else if (val->IsBoolean()) {
-            request.set(*keyv, val->BooleanValue());
-        } else if (val->IsNumber()) {
-            request.set(*keyv, val->NumberValue());
-        } else if (val->IsInt32()) {
-            request.set(*keyv, val->Int32Value());
-        } else if (val->IsUint32()) {
-            request.set(*keyv,
-                static_cast<blpapi::Int64>(val->Uint32Value()));
-        } else if (val->IsDate()) {
-            blpapi::Datetime dt;
-            mkdatetime(&dt, val);
-            request.set(*keyv, dt);
-        } else if (val->IsArray()) {
-            // Arrays are marshalled into the blpapi::Request by appending
-            // value types using the key of the array in the outer object.
-            Local<Object> subarray = val->ToObject();
-            int jmax = Array::Cast(*val)->Length();
-            for (int j = 0; j < jmax; ++j) {
-                Local<Value> subval = subarray->Get(j);
-                // Only strings, booleans, and numbers are marshalled.
-                if (subval->IsString()) {
-                    Local<String> s = subval->ToString();
-                    String::Utf8Value subvalv(s);
-                    request.append(*keyv, *subvalv);
-                } else if (subval->IsBoolean()) {
-                    request.append(*keyv, subval->BooleanValue());
-                } else if (subval->IsNumber()) {
-                    request.append(*keyv, subval->NumberValue());
-                } else if (subval->IsInt32()) {
-                    request.append(*keyv, subval->Int32Value());
-                } else if (subval->IsUint32()) {
-                    request.append(*keyv,
-                        static_cast<blpapi::Int64>(subval->Uint32Value()));
-                } else if (subval->IsDate()) {
-                    blpapi::Datetime dt;
-                    mkdatetime(&dt, subval);
-                    request.append(*keyv, dt);
-                } else {
-                    return ThrowException(Exception::Error(String::New(
-                                "Array contains invalid value type.")));
-                }
-            }
-        } else {
-            return ThrowException(Exception::Error(String::New(
-                        "Object contains invalid value type.")));
-        }
+
+		if (key->Equals(String::New("overrides"))) {
+			if (val->IsObject()) {
+				blpapi::Element overrides = request.getElement("overrides");
+				Local<Object> ovrObj = val->ToObject();
+				Local<Array> ovrKeys = ovrObj->GetPropertyNames();
+				for (std::size_t ok = 0; ok < ovrKeys->Length(); ++ok) {
+					blpapi::Element ovre = overrides.appendElement();
+					Local<String> ovrKey = ovrKeys->Get(ok)->ToString();
+					String::Utf8Value ovrKeyv(ovrKey);
+					Local<Value> ovrVal = ovrObj->Get(ovrKey);
+					ovre.setElement("fieldId", *ovrKeyv);
+					if (ovrVal->IsString()) {
+						Local<String> ovrValStr = ovrVal->ToString();
+						String::Utf8Value ovrValv(ovrValStr);
+						ovre.setElement("value", *ovrValv);
+					} else if (ovrVal->IsBoolean()) {
+						ovre.setElement("value", ovrVal->BooleanValue());
+					} else if (ovrVal->IsNumber()) {
+						ovre.setElement(*keyv, ovrVal->NumberValue());
+					} else if (ovrVal->IsInt32()) {
+						ovre.setElement("value", ovrVal->Int32Value());
+					} else if (ovrVal->IsUint32()) {
+						ovre.setElement("value", static_cast<blpapi::Int64>(ovrVal->Uint32Value()));
+					} else if (ovrVal->IsDate()) {
+						blpapi::Datetime ovrDt;
+						mkdatetime(&ovrDt, ovrVal);
+						ovre.setElement("value", ovrDt);
+					} else {
+						return ThrowException(Exception::Error(String::New(
+							"Object 'overrides' contains invalid value type.")));
+					}
+				}
+			} else {
+				return ThrowException(Exception::Error(String::New(
+								"Object contains invalid value type.")));
+			}
+		} else {
+			if (val->IsString()) {
+				Local<String> s = val->ToString();
+				String::Utf8Value valv(s);
+				request.set(*keyv, *valv);
+			} else if (val->IsBoolean()) {
+				request.set(*keyv, val->BooleanValue());
+			} else if (val->IsNumber()) {
+				request.set(*keyv, val->NumberValue());
+			} else if (val->IsInt32()) {
+				request.set(*keyv, val->Int32Value());
+			} else if (val->IsUint32()) {
+				request.set(*keyv,
+						static_cast<blpapi::Int64>(val->Uint32Value()));
+			} else if (val->IsDate()) {
+				blpapi::Datetime dt;
+				mkdatetime(&dt, val);
+				request.set(*keyv, dt);
+			} else if (val->IsArray()) {
+				// Arrays are marshalled into the blpapi::Request by appending
+				// value types using the key of the array in the outer object.
+				Local<Object> subarray = val->ToObject();
+				int jmax = Array::Cast(*val)->Length();
+				for (int j = 0; j < jmax; ++j) {
+					Local<Value> subval = subarray->Get(j);
+					// Only strings, booleans, and numbers are marshalled.
+					if (subval->IsString()) {
+						Local<String> s = subval->ToString();
+						String::Utf8Value subvalv(s);
+						request.append(*keyv, *subvalv);
+					} else if (subval->IsBoolean()) {
+						request.append(*keyv, subval->BooleanValue());
+					} else if (subval->IsNumber()) {
+						request.append(*keyv, subval->NumberValue());
+					} else if (subval->IsInt32()) {
+						request.append(*keyv, subval->Int32Value());
+					} else if (subval->IsUint32()) {
+						request.append(*keyv,
+								static_cast<blpapi::Int64>(subval->Uint32Value()));
+					} else if (subval->IsDate()) {
+						blpapi::Datetime dt;
+						mkdatetime(&dt, subval);
+						request.append(*keyv, dt);
+					} else {
+						return ThrowException(Exception::Error(String::New(
+										"Array contains invalid value type.")));
+					}
+				}
+			} else {
+				return ThrowException(Exception::Error(String::New(
+								"Object contains invalid value type.")));
+			}
+		}
     }
 
     blpapi::CorrelationId cid(cidi);
