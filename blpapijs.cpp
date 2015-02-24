@@ -60,16 +60,38 @@
 #endif
 
 #define BLPAPI_EXCEPTION_TRY try {
+
+#define BLPAPI_EXCEPTION_NEW(type)                                          \
+    Local<Object> err = Object::New(Isolate::GetCurrent());                 \
+    err->Set(NEW_STRING("type"), NEW_STRING(#type));                        \
+    err->Set(NEW_STRING("exception"),                                       \
+            Exception::Error(NEW_STRING(e.description().c_str())));
+
+#define BLPAPI_EXCEPTION_THROW(prefix, type)                                \
+    BLPAPI_EXCEPTION_NEW(type)                                              \
+    prefix##RetThrowException(err);
+
+#define BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, type)                          \
+    } catch (blpapi::type& e) {                                             \
+        BLPAPI_EXCEPTION_THROW(prefix, type)
+
+#define BLPAPI_EXCEPTION_IMPL(prefix)                                       \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, DuplicateCorrelationIdException)   \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, InvalidStateException)             \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, InvalidArgumentException)          \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, InvalidConversionException)        \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, IndexOutOfRangeException)          \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, FieldNotFoundException)            \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, NotFoundException)                 \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, UnknownErrorException)             \
+    BLPAPI_EXCEPTION_CATCH_BLOCK(prefix, UnsupportedOperationException)     \
+    }
+
+
 #define BLPAPI_EXCEPTION_CATCH                                              \
-    } catch (blpapi::Exception& e) {                                        \
-        NoRetThrowException(Exception::Error(                               \
-            NEW_STRING(e.description().c_str())));                          \
-    }
+    BLPAPI_EXCEPTION_IMPL()
 #define BLPAPI_EXCEPTION_CATCH_RETURN                                       \
-    } catch (blpapi::Exception& e) {                                        \
-        RetThrowException(Exception::Error(                                 \
-            NEW_STRING(e.description().c_str())));                          \
-    }
+    BLPAPI_EXCEPTION_IMPL(No)
 
 using namespace node;
 using namespace v8;
