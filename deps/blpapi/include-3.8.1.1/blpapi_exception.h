@@ -406,7 +406,7 @@ void ExceptionUtil::throwException(int errorCode)
       case BLPAPI_NOTFOUND_CLASS:
         throw NotFoundException(description);
       default:
-        throw Exception(description);
+        throw UnknownErrorException(description);
     }
 }
 
