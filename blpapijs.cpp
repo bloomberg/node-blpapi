@@ -1216,6 +1216,12 @@ Session::elementValueToValue(Isolate                *isolate,
         case blpapi::DataType::SEQUENCE:
         case blpapi::DataType::CHOICE:
             return elementToValue(isolate, e.getValueAsElement(idx));
+		
+		case blpapi::DataType::CHOICE:{
+			if (e.isArray()) {
+				return elementToValue(isolate, e.getValueAsElement(idx));
+			}
+		}
         default:
             break;
     }
